@@ -1,2 +1,2 @@
-javac Main.java Vehicle.java Serializer.java Vehicles.java Sizes.java
-java Main
+javac Main.java 
+java -classpath derby.jar;. Main database.properties

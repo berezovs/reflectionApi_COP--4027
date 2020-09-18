@@ -24,7 +24,6 @@ public class Serializer {
             FileInputStream fin = new FileInputStream(fileName);
             ObjectInputStream in = new ObjectInputStream(fin);
             v = (Vehicle) in.readObject();
-            System.out.println("Make: " + v.getMake() + "\nEngine Size: " + v.getEngineSize());
             in.close();
 
         } catch (Exception e) {
