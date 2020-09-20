@@ -2,15 +2,20 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 public class Serializer {
-    private final String fileName = "Vehicles.dat";
+    private String fileName = null;
 
-    public void serializeObject(Vehicle vehicle) {
+    Serializer(String fileName){
+        this.fileName = fileName;
+    }
+
+    public void serializeObject(Serializable object) {
         try {
             FileOutputStream fout = new FileOutputStream(fileName);
             ObjectOutputStream out = new ObjectOutputStream(fout);
-            out.writeObject(vehicle);
+            out.writeObject(object);
             out.flush();
             out.close();
         } catch (Exception e) {
@@ -18,17 +23,17 @@ public class Serializer {
         }
     }
 
-    public Vehicle deserializeObject() {
-        Vehicle v = null;
+    public Serializable deserializeObject() {
+       Serializable object = null;
         try {
             FileInputStream fin = new FileInputStream(fileName);
             ObjectInputStream in = new ObjectInputStream(fin);
-            v = (Vehicle) in.readObject();
+            object = (Serializable) in.readObject();
             in.close();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return v;
+        return object;
     }
 }

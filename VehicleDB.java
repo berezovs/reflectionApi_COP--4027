@@ -1,18 +1,16 @@
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class VehicleDB implements Initializable {
     private String dbProperties = null;
     private String dbName = null;
     private Statement statement = null;
     private Connection conn = null;
+    private final String VEHICLE_DATA_FILENAME = "Vehicle.dat";
 
     private Class<Vehicle> vehicleCls = null;
 
@@ -21,7 +19,6 @@ public class VehicleDB implements Initializable {
         this.dbName = dbName;
 
         vehicleCls = Vehicle.class;
-        ;
 
     }
 
@@ -30,8 +27,15 @@ public class VehicleDB implements Initializable {
         Database.init(dbProperties);
         conn = Database.getConnection();
         statement = conn.createStatement();
+
         this.dropTable();
         this.createTable();
+
+        Serializer serializer = new Serializer(VEHICLE_DATA_FILENAME);
+        serializer.serializeObject(this.getVehicleData());
+
+        VehicleData data = (VehicleData) serializer.deserializeObject();
+        this.populateDatabase(data);
 
     }
 
@@ -54,8 +58,8 @@ public class VehicleDB implements Initializable {
                 System.out.println("Logging: Unknown datatype " + classFields[i].getType());
                 continue;
             }
-            if(classFields.length!=i+1){
-                parameters+=", ";
+            if (classFields.length != i + 1) {
+                parameters += ", ";
             }
         }
 
@@ -71,20 +75,40 @@ public class VehicleDB implements Initializable {
 
     }
 
-    public void populateDatabase() {
+    public void populateDatabase(VehicleData data) {
+        ArrayList<Vehicle> vehicles = data.getVehicleData();
 
+        for (Vehicle vehicle : vehicles) {
+            Field[] fields = vehicle.getClass().getDeclaredFields();
+
+            for (Field field : fields) {
+                field.setAccessible(true);
+                try {
+                    System.out.print(field.getName() + " " + field.get(vehicle) + " ");
+                    
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            System.out.println();
+        }
     }
 
     public void dropTable() {
-        PreparedStatement dropTableStatement = null;
-        String dropTableString = "DROP TABLE ?";
+
+        String dropTableString = "DROP TABLE " + this.getClassName();
 
         try {
-            dropTableStatement = conn.prepareStatement(dropTableString);
-            dropTableStatement.setString(1, this.getClassName());
+            System.out.println("Dropping Table " + this.getClassName());
+            statement.execute(dropTableString);
+
         } catch (Exception e) {
+
             System.out.println("Drop failed");
+            e.printStackTrace();
+
         }
+
     }
 
     public Field[] getClassFields() {
@@ -98,7 +122,9 @@ public class VehicleDB implements Initializable {
         return vehicleCls.getName();
     }
 
-    public void intitializeVehicleData() {
+    public VehicleData getVehicleData() {
+        return new VehicleData();
 
     }
+
 }
