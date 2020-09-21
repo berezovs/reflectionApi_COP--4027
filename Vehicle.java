@@ -4,8 +4,9 @@ public class Vehicle implements Serializable {
     /**
      *
      */
-    private String size;
+    
     private String make;
+    private String size;
     private double engineSize;
     private boolean isImport;
     private double weight;

@@ -2,6 +2,8 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.util.ArrayList;
 
@@ -17,7 +19,6 @@ public class VehicleDB implements Initializable {
     VehicleDB(String dbProperties, String dbName) {
         this.dbProperties = dbProperties;
         this.dbName = dbName;
-
         vehicleCls = Vehicle.class;
 
     }
@@ -64,7 +65,6 @@ public class VehicleDB implements Initializable {
         }
 
         createTableString += "(" + parameters + ")";
-        System.out.println(createTableString);
 
         try {
             statement.execute(createTableString);
@@ -76,49 +76,104 @@ public class VehicleDB implements Initializable {
     }
 
     public void populateDatabase(VehicleData data) {
-        String insertStatement = "INSERT INTO " +this.getClassName()+" VALUES (?, ?, ?, ?, ?)";
+        String insertStatement = "INSERT INTO " + this.getClassName() + " VALUES (?, ?, ?, ?, ?)";
         PreparedStatement insertVehicle = null;
         ArrayList<Vehicle> vehicles = data.getVehicleData();
 
         for (Vehicle vehicle : vehicles) {
-            try{
-            Field size= vehicle.getClass().getDeclaredField("size");
-            size.setAccessible(true);
+            try {
+                Field size = vehicle.getClass().getDeclaredField("size");
+                size.setAccessible(true);
 
-            Field make= vehicle.getClass().getDeclaredField("make");
-            make.setAccessible(true);
+                Field make = vehicle.getClass().getDeclaredField("make");
+                make.setAccessible(true);
 
-            Field engineSize= vehicle.getClass().getDeclaredField("engineSize");
-            engineSize.setAccessible(true);
+                Field engineSize = vehicle.getClass().getDeclaredField("engineSize");
+                engineSize.setAccessible(true);
 
-            Field isImport= vehicle.getClass().getDeclaredField("isImport");
-            isImport.setAccessible(true);
+                Field isImport = vehicle.getClass().getDeclaredField("isImport");
+                isImport.setAccessible(true);
 
-            Field weight= vehicle.getClass().getDeclaredField("weight");
-            weight.setAccessible(true);
+                Field weight = vehicle.getClass().getDeclaredField("weight");
+                weight.setAccessible(true);
 
+                insertVehicle = conn.prepareStatement(insertStatement);
 
-            
-           insertVehicle = conn.prepareStatement(insertStatement);
-            
-            //insertVehicle.setString(1, this.getClassName());
-            insertVehicle.setString(1, (String)(size.get(vehicle)));
-            insertVehicle.setString(2, (String)(make.get(vehicle)));
-            insertVehicle.setDouble(3, (double)(engineSize.get(vehicle)));
-            insertVehicle.setBoolean(4, (boolean)(isImport.get(vehicle)));
-            insertVehicle.setDouble(5, (double) (weight.get(vehicle)));
-            insertVehicle.execute();
+                
+                insertVehicle.setString(1, (String) (make.get(vehicle)));
+                insertVehicle.setString(2, (String) (size.get(vehicle)));
+                insertVehicle.setDouble(3, (double) (engineSize.get(vehicle)));
+                insertVehicle.setBoolean(4, (boolean) (isImport.get(vehicle)));
+                insertVehicle.setDouble(5, (int)(double) (weight.get(vehicle)));
+                insertVehicle.execute();
 
-        //     conn.close();
-
-            }
-            catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
-          
+        }
     }
-}
+
+    public void executeQueries() {
+        ResultSet result = null;
+        ResultSetMetaData rsm = null;
+
+        try {
+            // Retrieve all vehicles
+
+            System.out.println("Displaying all vehicles");
+            result = statement.executeQuery("SELECT * FROM " + this.getClassName());
+            rsm = result.getMetaData();
+            this.printQueryResults(result, rsm);
+
+            // retrieve all Chevy and Toyotas
+            String chevysAndToyotasString = "SELECT * FROM " + this.getClassName() + " WHERE make = ? OR make = ?";
+            PreparedStatement allChevysAndToyotasQuery = conn.prepareStatement(chevysAndToyotasString);
+
+            System.out.println("");
+            System.out.println("Displaying all Chevys and Toyotas");
+            allChevysAndToyotasQuery.setString(1, "Chevy");
+            allChevysAndToyotasQuery.setString(2, "Toyota");
+            result = allChevysAndToyotasQuery.executeQuery();
+            rsm = result.getMetaData();
+            this.printQueryResults(result, rsm);
+
+            String fullsizedVehicles = "SELECT * FROM " + this.getClassName() + " WHERE weight > ?";
+            PreparedStatement fullsizedVehiclesQuery = conn.prepareStatement(fullsizedVehicles);
+
+            System.out.println("");
+            System.out.println("Displaying vehicles weighing more than 2500lbs");
+            fullsizedVehiclesQuery.setDouble(1, 2500.0);
+            result = fullsizedVehiclesQuery.executeQuery();
+            rsm = result.getMetaData();
+            this.printQueryResults(result, rsm);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void printQueryResults(ResultSet result, ResultSetMetaData rsm) {
+
+        try {
+            int cols = rsm.getColumnCount();
+
+            for (int i = 1; i <= cols; i++)
+                System.out.printf("%1$-15s", rsm.getColumnName(i));
+            System.out.println("");
+
+            while (result.next()) {
+
+                for (int i = 1; i <= cols; i++)
+                    System.out.printf("%1$-15s", result.getString(i));
+                System.out.println("");
+
+            }
+
+        } catch (Exception e) {
+
+        }
+    }
 
     public void dropTable() {
 
