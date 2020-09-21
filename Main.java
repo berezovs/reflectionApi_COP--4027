@@ -12,7 +12,7 @@ public class Main {
        vehicleDB.initializeDatabase();
        }
        catch(Exception e){
-           
+           //e.printStackTrace();
        }
 
         // Class<? extends Vehicle> cls = v.getClass();

@@ -76,23 +76,49 @@ public class VehicleDB implements Initializable {
     }
 
     public void populateDatabase(VehicleData data) {
+        String insertStatement = "INSERT INTO " +this.getClassName()+" VALUES (?, ?, ?, ?, ?)";
+        PreparedStatement insertVehicle = null;
         ArrayList<Vehicle> vehicles = data.getVehicleData();
 
         for (Vehicle vehicle : vehicles) {
-            Field[] fields = vehicle.getClass().getDeclaredFields();
+            try{
+            Field size= vehicle.getClass().getDeclaredField("size");
+            size.setAccessible(true);
 
-            for (Field field : fields) {
-                field.setAccessible(true);
-                try {
-                    System.out.print(field.getName() + " " + field.get(vehicle) + " ");
-                    
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            Field make= vehicle.getClass().getDeclaredField("make");
+            make.setAccessible(true);
+
+            Field engineSize= vehicle.getClass().getDeclaredField("engineSize");
+            engineSize.setAccessible(true);
+
+            Field isImport= vehicle.getClass().getDeclaredField("isImport");
+            isImport.setAccessible(true);
+
+            Field weight= vehicle.getClass().getDeclaredField("weight");
+            weight.setAccessible(true);
+
+
+            
+           insertVehicle = conn.prepareStatement(insertStatement);
+            
+            //insertVehicle.setString(1, this.getClassName());
+            insertVehicle.setString(1, (String)(size.get(vehicle)));
+            insertVehicle.setString(2, (String)(make.get(vehicle)));
+            insertVehicle.setDouble(3, (double)(engineSize.get(vehicle)));
+            insertVehicle.setBoolean(4, (boolean)(isImport.get(vehicle)));
+            insertVehicle.setDouble(5, (double) (weight.get(vehicle)));
+            insertVehicle.execute();
+
+        //     conn.close();
+
             }
-            System.out.println();
-        }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+
+          
     }
+}
 
     public void dropTable() {
 
