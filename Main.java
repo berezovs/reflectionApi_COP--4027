@@ -10,6 +10,7 @@ public class Main {
        try{
        vehicleDB.initializeDatabase();
        vehicleDB.executeQueries();
+       vehicleDB.dropTable();
        }
        catch(Exception e){
            e.printStackTrace();

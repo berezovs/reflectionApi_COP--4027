@@ -1,4 +1,3 @@
-import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,11 +7,13 @@ import java.sql.Statement;
 import java.util.ArrayList;
 
 public class VehicleDB implements Initializable {
+    Logger logger = null;
     private String dbProperties = null;
     private String dbName = null;
     private Statement statement = null;
     private Connection conn = null;
     private final String VEHICLE_DATA_FILENAME = "Vehicle.dat";
+    private final String DB_OPERATIONS_LOG_FILE = "dbOperations.log";
 
     private Class<Vehicle> vehicleCls = null;
 
@@ -20,6 +21,7 @@ public class VehicleDB implements Initializable {
         this.dbProperties = dbProperties;
         this.dbName = dbName;
         vehicleCls = Vehicle.class;
+        logger = new Logger(DB_OPERATIONS_LOG_FILE);
 
     }
 
@@ -42,7 +44,7 @@ public class VehicleDB implements Initializable {
 
     public void createTable() {
         String parameters = "";
-        String createTableString = "CREATE TABLE " + this.getClassName();
+        String createTableString = "CREATE TABLE " + this.dbName;
 
         Field[] classFields = this.getClassFields();
 
@@ -56,7 +58,7 @@ public class VehicleDB implements Initializable {
             } else if (classFields[i].getType().toString().equals("class java.lang.String")) {
                 parameters += classFields[i].getName() + " VARCHAR(20)";
             } else {
-                System.out.println("Logging: Unknown datatype " + classFields[i].getType());
+                logger.log("Creating table... Error: Unknown datatype " + classFields[i].getType());
                 continue;
             }
             if (classFields.length != i + 1) {
@@ -67,16 +69,20 @@ public class VehicleDB implements Initializable {
         createTableString += "(" + parameters + ")";
 
         try {
+
             statement.execute(createTableString);
+            logger.log("Table " + this.dbName + " created succesfully.");
+
         } catch (Exception e) {
+            logger.log("Error: Could not create table " + this.dbName+".");
             e.printStackTrace();
-            System.out.println("Could not create table");
+
         }
 
     }
 
     public void populateDatabase(VehicleData data) {
-        String insertStatement = "INSERT INTO " + this.getClassName() + " VALUES (?, ?, ?, ?, ?)";
+        String insertStatement = "INSERT INTO " + this.dbName + " VALUES (?, ?, ?, ?, ?)";
         PreparedStatement insertVehicle = null;
         ArrayList<Vehicle> vehicles = data.getVehicleData();
 
@@ -98,13 +104,11 @@ public class VehicleDB implements Initializable {
                 weight.setAccessible(true);
 
                 insertVehicle = conn.prepareStatement(insertStatement);
-
-                
                 insertVehicle.setString(1, (String) (make.get(vehicle)));
                 insertVehicle.setString(2, (String) (size.get(vehicle)));
                 insertVehicle.setDouble(3, (double) (engineSize.get(vehicle)));
                 insertVehicle.setBoolean(4, (boolean) (isImport.get(vehicle)));
-                insertVehicle.setDouble(5, (int)(double) (weight.get(vehicle)));
+                insertVehicle.setDouble(5, (int) (double) (weight.get(vehicle)));
                 insertVehicle.execute();
 
             } catch (Exception e) {
@@ -120,25 +124,29 @@ public class VehicleDB implements Initializable {
 
         try {
             // Retrieve all vehicles
-
             System.out.println("Displaying all vehicles");
-            result = statement.executeQuery("SELECT * FROM " + this.getClassName());
+            String showAllVehiclesQuery = "SELECT * FROM " + this.dbName;
+            result = statement.executeQuery(showAllVehiclesQuery);
             rsm = result.getMetaData();
             this.printQueryResults(result, rsm);
+            logger.log("Displaying all vehicles");
 
             // retrieve all Chevy and Toyotas
-            String chevysAndToyotasString = "SELECT * FROM " + this.getClassName() + " WHERE make = ? OR make = ?";
+            String chevysAndToyotasString = "SELECT * FROM " + this.dbName + " WHERE make = ? OR make = ?";
             PreparedStatement allChevysAndToyotasQuery = conn.prepareStatement(chevysAndToyotasString);
 
             System.out.println("");
             System.out.println("Displaying all Chevys and Toyotas");
+
             allChevysAndToyotasQuery.setString(1, "Chevy");
             allChevysAndToyotasQuery.setString(2, "Toyota");
             result = allChevysAndToyotasQuery.executeQuery();
             rsm = result.getMetaData();
             this.printQueryResults(result, rsm);
+            logger.log("Showing all Chevys and Toyotas");
 
-            String fullsizedVehicles = "SELECT * FROM " + this.getClassName() + " WHERE weight > ?";
+            // Show all vehicles weighing more than 2500lbs
+            String fullsizedVehicles = "SELECT * FROM " + this.dbName + " WHERE weight > ?";
             PreparedStatement fullsizedVehiclesQuery = conn.prepareStatement(fullsizedVehicles);
 
             System.out.println("");
@@ -147,6 +155,7 @@ public class VehicleDB implements Initializable {
             result = fullsizedVehiclesQuery.executeQuery();
             rsm = result.getMetaData();
             this.printQueryResults(result, rsm);
+            logger.log("Showing vehicles whose weight is greater than 2500lbs");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -171,22 +180,22 @@ public class VehicleDB implements Initializable {
             }
 
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 
     public void dropTable() {
 
-        String dropTableString = "DROP TABLE " + this.getClassName();
+        String dropTableString = "DROP TABLE " + this.dbName;
 
         try {
-            System.out.println("Dropping Table " + this.getClassName());
+
             statement.execute(dropTableString);
+            logger.log("Dropping table " + this.dbName);
 
         } catch (Exception e) {
 
-            System.out.println("Drop failed");
-            e.printStackTrace();
+            logger.log("Could not drop table " + this.dbName);
 
         }
 
