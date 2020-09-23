@@ -1,7 +1,9 @@
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+/*
+Author: Serghei Berezovschi
+Project: Reflection(Project1)
+Class: COP--4027
+*/
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintWriter;
 
 public class Logger {
@@ -13,7 +15,7 @@ public class Logger {
         this.fileName = filename;
     }
 
-    
+    //creates a log file if it doesn't already exist and appends log statement to the end of file
     public void log(String logMessage) {
         try {
             this.out = new FileOutputStream(fileName, true);

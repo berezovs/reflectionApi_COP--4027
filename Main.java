@@ -1,3 +1,9 @@
+/*
+Author: Serghei Berezovschi
+Project: Reflection(Project1)
+Class: COP--4027
+*/
+
 import java.lang.reflect.InvocationTargetException;
 
 
@@ -11,6 +17,7 @@ public class Main {
        vehicleDB.initializeDatabase();
        vehicleDB.executeQueries();
        vehicleDB.dropTable();
+       System.out.println("Exiting program");
        }
        catch(Exception e){
            e.printStackTrace();

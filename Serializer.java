@@ -1,3 +1,8 @@
+/*
+Author: Serghei Berezovschi
+Project: Reflection(Project1)
+Class: COP--4027
+*/
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
@@ -11,6 +16,7 @@ public class Serializer {
         this.fileName = fileName;
     }
 
+    //Serializes object passed in as a parameter to a file
     public void serializeObject(Serializable object) {
         try {
             FileOutputStream fout = new FileOutputStream(fileName);
@@ -23,6 +29,8 @@ public class Serializer {
         }
     }
 
+
+    //deserializes and object and returns it
     public Serializable deserializeObject() {
        Serializable object = null;
         try {
